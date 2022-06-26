@@ -1,9 +1,11 @@
-// Assign the data from `data.js` to a descriptive variable
-var tableData = data;
+// from data.js
+const tableData = data;
 
-console.log(tableData);
+// get table references
+var tbody = d3.select("tbody");
 
-// Create a Reset button
+// QUALITY OF LIFE CHANGES: Create a Reset button
+// Code found through independent research
 
 const newButton = document.createElement("button");
 const panelBody = document.getElementsByClassName("panel-body")[0];
@@ -14,112 +16,74 @@ panelBody.appendChild(newButton);
 
 console.log(newButton);
 
-// Setup
+function buildTable(data) {
+  // First, clear out any existing data
+  tbody.html("");
 
-// Select the tbody
-var tbody = d3.select("tbody");
-// Select the buttons
-var filter_button = d3.select("#filter-btn");
-var clear_button = d3.select("#clear-btn");
-// Select the input elements and get the raw HTML node
-var filter_bar_0 = d3.select("#datetime");
-var filter_bar_1 = d3.select("#city");
-var filter_bar_2 = d3.select("#state");
-var filter_bar_3 = d3.select("#country");
-var filter_bar_4 = d3.select("#shape");
+  // Next, loop through each object in the data
+  // and append a row and cells for each value in the row
+  data.forEach((dataRow) => {
+    // Append a row to the table body
+    let row = tbody.append("tr");
 
-
-// Create a function to display the data list
-
-table(tableData);
-
-function table() {
-    data.forEach((ufo) => {
-        var tr = tbody.append("tr");
-        for (key in ufo) {
-            tr.append("td").text(ufo[key]);
-        }
+    // Loop through each field in the dataRow and add
+    // each value as a table cell (td)
+    Object.values(dataRow).forEach((val) => {
+      let cell = row.append("td");
+      cell.text(val);
     });
-};
-
-
-// Create event handlers
-
-filter_button.on("click", runEnter);
-clear_button.on("click", reset);
-
-
-// Complete the filter button function 
-
-function runEnter() {
-
-    // Get the value property of the input elements
-    var input0 = filter_bar_0.property("value");
-    var input1 = filter_bar_1.property("value");
-    var input2 = filter_bar_2.property("value");
-    var input3 = filter_bar_3.property("value");
-    var input4 = filter_bar_4.property("value");
-
-    var filteredData = tableData;
-
-    // Define conditions for filteredData
-
-    if (input0) {
-        filteredData = filteredData.filter(data => data.datetime === input0);
-    }
-
-    if (input1) {
-        filteredData = filteredData.filter(data => data.city === input1);
-    }
-
-    if (input2) {
-        filteredData = filteredData.filter(data => data.state === input2);
-    }
-
-    if (input3) {
-        filteredData = filteredData.filter(data => data.country === input3);
-    }
-
-    if (input4) {
-        filteredData = filteredData.filter(data => data.shape === input4);
-    }
-
-    if (filteredData != tableData) {
-        tbody.selectAll('tr').remove();
-        tbody.selectAll('td').remove();
-
-        filteredData.forEach((search) => {
-            var new_tr = tbody.append("tr");
-            for (key in search) {
-                new_tr.append("td").text(search[key]);
-            }
-        })
-    } else {
-        // Revert to displaying all the ufo sightings in a table format
-        table(tableData);
-    }
-};
-
-
-// Complete the reset button function 
-
-function reset() {
-
-    //Clear the input elements
-    // input0 = "";
-    // input1 = "";
-    // input2 = "";
-    // input3 = "";
-    // input4 = "";
-    document.getElementById("datetime").value = "";
-    document.getElementById("city").value = "";
-    document.getElementById("state").value = "";
-    document.getElementById("country").value = "";
-    document.getElementById("shape").value = "";
-
-    // Remove any children from the table
-    tbody.html("");
-
-    // Revert to displaying all the ufo sightings in the table format
-    table(tableData);
+  });
 }
+
+// 1. Create a variable to keep track of all the filters as an object.
+var filter ={};
+
+// 3. Use this function to update the filters. 
+function updateFilters() {
+
+    // 4a. Save the element that was changed as a variable.
+    let changedElement = d3.select(this);
+
+    // 4b. Save the value that was changed as a variable.
+    let elementValue = changedElement.propety("Value");
+    console.log(elementValue);
+
+    // 4c. Save the id of the filter that was changed as a variable.
+    let filterId = changedElement.attr("id");
+
+    // 5. If a filter value was entered then add that filterId and value
+    // to the filters list. Otherwise, clear that filter from the filters object.
+    if (elementValue) {
+      filters[filterId] = elementValue;
+    }
+
+    else {
+      delete filters[filterId];
+    }
+  
+    // 6. Call function to apply all filters and rebuild the table
+    filterTable();
+  
+  }
+  
+  // 7. Use this function to filter the table when data is entered.
+  function filterTable() {
+  
+    // 8. Set the filtered data to the tableData.
+    var filteredData = tableData;
+  
+    // 9. Loop through all of the filters and keep any data that
+    // matches the filter values
+    Object.entries(filters).forEach(([key, value]) => {
+      filteredData = filteredData.filter(row => row[key] === value);
+    });
+  
+    // 10. Finally, rebuild the table using the filtered data
+    buildTable(filteredData);
+  }
+  
+  // 2. Attach an event to listen for changes to each filter
+  d3.selectAll("input").on("change", updateFilters);
+  
+  // Build the table when the page loads
+  buildTable(tableData);
